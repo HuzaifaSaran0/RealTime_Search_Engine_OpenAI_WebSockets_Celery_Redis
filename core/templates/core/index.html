@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Live Search - Multiple Queries</title>
+</head>
+
+<body>
+    <h1>Editable Tavily Searches</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {% for query in queries %}
+        <input type="text" name="queries" value="{{ query }}" size="50"><br><br>
+        {% endfor %}
+        <button type="submit">Search</button>
+    </form>
+
+    <hr>
+
+    {% if all_results %}
+    {% for block in all_results %}
+    <h2>Results for "{{ block.query }}"</h2>
+    {% if block.results %}
+    <ul>
+        {% for r in block.results %}
+        <li>
+            <a href="{{ r.url }}" target="_blank">{{ r.title }}</a><br>
+            {{ r.content }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No results found.</p>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+</body>
+
+</html>

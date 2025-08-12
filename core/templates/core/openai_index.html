@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .search-form {
+            margin-bottom: 30px;
+        }
+
+        .query-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+
+        .result-query {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .result-content {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        hr {
+            margin: 25px 0;
+            border: 0;
+            height: 1px;
+            background-color: #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="search-form">
+        <form method="POST">
+            {% csrf_token %}
+            <h2>Enter your search queries (max 2)</h2>
+            {% for q in queries %}
+            <input type="text" class="query-input" name="queries" value="{{ q }}"
+                placeholder="Enter search query..."><br>
+            {% endfor %}
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <hr>
+    <div id="results" class="results">
+        <h2>Search Results</h2>
+        {% for item in all_results %}
+        <div class="result-item">
+            <h3 class="result-query">Results for: "{{ item.query }}"</h3>
+            <div class="result-content">
+                {% for result in item.results %}
+                <div style="margin-bottom: 20px;">
+                    <strong><a href="{{ result.url }}" target="_blank">{{ result.title }}</a></strong><br>
+                    <p>{{ result.content }}</p>
+                    <small>{{ result.url }}</small>
+                </div>
+                {% if not forloop.last %}
+                <hr style="margin: 15px 0;">{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // Assuming user is logged in and we have their ID
+        const userId = {{ request.user.id }};  // Passed from Django context
+        console.log("User ID:", userId);
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socket = new WebSocket(`${protocol}//${window.location.host}/ws/search/${userId}/`); // this line establishes the WebSocket connection and handshake is initiated which means a connection is being established between the client and the server
+        // const socket = new WebSocket(`ws://${window.location.host}/ws/search/${userId}/`);
+        socket.onopen = () => console.log("WebSocket connected");
+        socket.onclose = () => console.log("WebSocket disconnected");   
+        socket.onerror = (error) => console.error("WebSocket error:", error);
+        socket.onmessage = function (e) {
+            const data = JSON.parse(e.data); // here data is coming from consumers.py and there from the signals.py file
+            console.log("New search result:", data);
+
+            // Append new results to the DOM
+            const resultsDiv = document.getElementById("results");
+            const newHTML = `
+                <div class="result-item">
+                    <h3 class="result-query">Results for: "${data.query}"</h3>
+                    <div class="result-content">
+                        ${data.results.map(r => `
+                            <div style="margin-bottom: 20px;">
+                                <strong><a href="${r.url}" target="_blank">${r.title}</a></strong><br>
+                                <p>${r.content}</p>
+                                <small>${r.url}</small>
+                            </div>
+                            <hr style="margin: 15px 0;">
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            resultsDiv.innerHTML += newHTML;
+        };
+    </script>
+</body>
+
+</html>
