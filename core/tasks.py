@@ -64,11 +64,31 @@ def fetch_openai_results_task(query, user_id=None):
         ) # this line is for creating a new SearchResult object and saving it to the database
         search_completed.send( # this line is for sending a signal when the search is completed, this send() method will trigger the function in signals.py under this search_completed signal
             sender=fetch_openai_results_task, # sender is send for identifying the source of the signal
-            search_result=search_result
-        )        
+            search_result=search_result # this line is for passing the search_result object to the signal
+        )
 
         return {"query": query, "results": results} # this return is only because celery always expects a return value, these values could be used later but in current setup, it is not being used anywhere
 
     except Exception as e:
         print(f"Error fetching {query}:", e)
         return {"query": query, "results": []}
+
+
+# schedule code
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+@shared_task
+def run_scheduled_searches():
+    # Loop through all users
+    for user in User.objects.all():
+        # Get their last search queries
+        latest_results = (
+            SearchResult.objects.filter(user_id=user.id)
+            .order_by("-created_at")
+            .values_list("query", flat=True)[:1]  # Get the latest query
+        )
+
+        for query in latest_results:
+            fetch_openai_results_task.delay(query, user.id)

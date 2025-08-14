@@ -147,3 +147,12 @@ CHANNEL_LAYERS = {
     },
 }
 
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    "run_search_every_hour": {
+        "task": "core.tasks.run_scheduled_searches",
+        "schedule": crontab(minute="*/5"),  # Every 5 minutes
+    },
+}
+

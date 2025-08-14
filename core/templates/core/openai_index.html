@@ -114,7 +114,7 @@
         const socket = new WebSocket(`${protocol}//${window.location.host}/ws/search/${userId}/`); // this line establishes the WebSocket connection and handshake is initiated which means a connection is being established between the client and the server
         // const socket = new WebSocket(`ws://${window.location.host}/ws/search/${userId}/`);
         socket.onopen = () => console.log("WebSocket connected");
-        socket.onclose = () => console.log("WebSocket disconnected");   
+        socket.onclose = () => console.log("WebSocket disconnected");
         socket.onerror = (error) => console.error("WebSocket error:", error);
         socket.onmessage = function (e) {
             const data = JSON.parse(e.data); // here data is coming from consumers.py and there from the signals.py file
@@ -137,7 +137,7 @@
                     </div>
                 </div>
             `;
-            resultsDiv.innerHTML += newHTML;
+            resultsDiv.innerHTML = newHTML;
         };
     </script>
 </body>

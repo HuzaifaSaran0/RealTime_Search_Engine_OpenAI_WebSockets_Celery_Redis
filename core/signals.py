@@ -24,7 +24,7 @@ def send_search_result_via_ws(sender, search_result, **kwargs):
             "type": "send_search_result",  # must match method in consumer
             "data": {
                 "query": search_result.query,
-                "results": search_result.results,
+                "results": search_result.results,  # limit to first 1 result
                 "created_at": search_result.created_at.isoformat(), # isoformat is for converting the datetime to a string format like "2025-01-01T00:00:00"
             },
         }
